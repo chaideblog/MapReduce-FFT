@@ -17,7 +17,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 
-public class ShortInputFormat extends FileInputFormat<LongWritable, ShortArrayWritable>{
+public class ShortInputFormat extends FileInputFormat<LongWritable, ShortArrayWritable> {
 	private static final double SPLIT_SLOP = 1.1;
 	
 	protected boolean isSplitable(Configuration conf, Path path) {
