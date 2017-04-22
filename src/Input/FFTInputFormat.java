@@ -1,23 +1,24 @@
-package HadoopFFT;
+package Input;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
-public class ShortInputFormat extends FileInputFormat<LongWritable, ShortArrayWritable> {
+import HadoopFFT.FFTWritable;
+
+public class FFTInputFormat extends FileInputFormat<LongWritable, FFTWritable> {
 	private static final double SPLIT_SLOP = 1.1;
 	
 	protected boolean isSplitable(Configuration conf, Path path) {
@@ -25,29 +26,22 @@ public class ShortInputFormat extends FileInputFormat<LongWritable, ShortArrayWr
 	}
 	
 	public List<InputSplit> getSplits(JobContext job) throws IOException {
-		/*
-        long minSplitSize = conf.getLong("mapred.min.split.size",1);// 最小分片大小
-        long maxSplitSize = conf.getLong("mapred.max.split.size", 1);// 最大分片大小
-        long blockSize = conf.getLong("dfs.block.size",1);// block的大小
-        long splitSize = Math.max(minSplitSize, Math.min(maxSplitSize, blockSize));// 分片的大小是由上面三者确定
-        */
 		long minSplitSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(job));// 最小分片大小
-		long maxSplitSize = getMaxSplitSize(job);// 最大分片大小
+		long maxSplitSize = getMaxSplitSize(job); // 最大分片大小
 
-        List<InputSplit> splits = new ArrayList<InputSplit>();// splits链表用来储存计算得到的分片结果
+        List<InputSplit> splits = new ArrayList<InputSplit>(); // splits链表用来储存计算得到的分片结果
         List<FileStatus> files = listStatus(job);
         
         for (FileStatus file : files) {
         	Path path = file.getPath();
         	FileSystem fs = path.getFileSystem(job.getConfiguration());
         	long length = file.getLen();
-        	//System.out.println("length:" + length); ///
-        	BlockLocation[] blkLocations = fs.getFileBlockLocations(file, 0, length);// 获取该文件所有block的信息列表
+        	BlockLocation[] blkLocations = fs.getFileBlockLocations(file, 0, length); // 获取该文件所有block的信息列表
         	if ((length != 0) && isSplitable(job, path)) {
         		// 判断文件是否可分割，通常是可分割的，但文件是压缩的，将不可分割
         		// 是否分割由FileInputFormat的isSplitable控制
         		long blockSize = file.getBlockSize();
-        		long splitSize = Math.max(minSplitSize, Math.min(maxSplitSize, blockSize));// 计算分片大小
+        		long splitSize = Math.max(minSplitSize, Math.min(maxSplitSize, blockSize)); // 计算分片大小
         		
         		long bytesRemaining = length;
         		while (((double) bytesRemaining) / splitSize > SPLIT_SLOP) {
@@ -73,11 +67,11 @@ public class ShortInputFormat extends FileInputFormat<LongWritable, ShortArrayWr
     }
 	
 	@Override
-	public RecordReader<LongWritable, ShortArrayWritable> createRecordReader(
-			InputSplit split, TaskAttemptContext context) throws IOException,
-			InterruptedException {
-		ShortRecordReader reader = new ShortRecordReader();
+	public RecordReader<LongWritable, FFTWritable> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+		FFTRecordReader reader = new FFTRecordReader();
 		reader.initialize(split, context);
 		return reader;
 	}
+	
 }
+
