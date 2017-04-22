@@ -4,7 +4,7 @@
 
 ## 程序结构
 
-MapReduce-FFT
+	MapReduce-FFT
 		|
 		|--bin(字节码文件)
 		|
